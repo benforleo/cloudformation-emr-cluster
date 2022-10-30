@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "EMR stack for training"
+Resources:
+  EMRServiceRole:
+    # The IAM role that EMR assumes in order to access AWS resources on your behalf
+    # Service Role
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "emr-training-service-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - elasticmapreduce.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEMRServicePolicy_v2
+
+  EMRJobFlowRole:
+    # Also called instance profile and EWC2 Role
+    # An IAM role for an EMR Cluster
+    # The default role is EMR_EC2_DefaultRole - to use, create in cli or console first
+    # This would be the permissions that your jobs have to do things.
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "emr-training-job-flow-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Tags:
+        - Key: "for-use-with-amazon-emr-managed-policies"
+          Value: "true"
+      Policies:
+        - PolicyName: "emr-training-ec2-role"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudwatch:*"
+                  - "ec2:Describe*"
+                  - "elasticmapreduce:Describe*"
+                  - "elasticmapreduce:ListBootstrapActions"
+                  - "elasticmapreduce:ListClusters"
+                  - "elasticmapreduce:ListInstanceGroups"
+                  - "elasticmapreduce:ListInstances"
+                  - "elasticmapreduce:ListSteps"
+                  - "rds:Describe*"
+                  - "sdb:*"
+                  - "sns:*"
+                  - "sqs:*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "s3:Get*"
+                  - "s3:List*"
+                  - "s3:Put*"
+                Resource:
+                  - !Sub "arn:aws:s3:::spark-training-us-east-1-${AWS::AccountId}"
+
+#  EMRCleanUpRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      RoleName: "emr-training-cleanup-role"
+#      AssumeRolePolicyDocument:
+#
+
+#
+#  EMRTrainingCluster:
+#    Type: AWS::EMR::Cluster
+#    #required properties Name JobFlowRole ServiceRole
+#    Properties:
+#      Name: emr-training-cluster
+#
+#      Instances:
+#        AdditionalMasterSecurityGroups:
+#          - String
+#        AdditionalSlaveSecurityGroups:
+#          - String
+#        CoreInstanceFleet:
+#          InstanceFleetConfig
+#        CoreInstanceGroup:
+#          InstanceGroupConfig
+#        Ec2KeyName: String
+#        Ec2SubnetId: String
+#        Ec2SubnetIds:
+#          - String
+#        EmrManagedMasterSecurityGroup: String
+#        EmrManagedSlaveSecurityGroup: String
+#        HadoopVersion: String
+#        KeepJobFlowAliveWhenNoSteps: Boolean
+#        MasterInstanceFleet:
+#          InstanceFleetConfig
+#        MasterInstanceGroup:
+#          InstanceGroupConfig
+#        Placement:
+#          PlacementType
+#        ServiceAccessSecurityGroup: String
+#        TaskInstanceFleets:
+#          - InstanceFleetConfig
+#        TaskInstanceGroups:
+#          - InstanceGroupConfig
+#        TerminationProtected: Boolean
+#
+#      JobFlowRole: EMR_EC2_DefaultRole
+#      ServiceRole: !Ref EMRServiceRole
+
+
+
